@@ -1,0 +1,20 @@
+{
+  "pages": [      
+    "pages/index/index",
+    "pages/peripheral/index",
+    "pages/central/index",
+    "example/logs/logs"
+  ],
+  "window": {
+    "backgroundTextStyle": "light",
+    "navigationBarBackgroundColor": "#fff",
+    "navigationBarTitleText": "WeChat",
+    "navigationBarTextStyle": "black"
+  },
+  "style": "v2",
+  "sitemapLocation": "sitemap.json",
+  "globalData": {
+    "title": "智能锁系统微信端"
+  
+  }
+}

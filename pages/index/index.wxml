@@ -1,0 +1,6 @@
+<!--pages/peripheral/index.wxml-->
+<view class="btn-area">
+  <navigator url="../central/index" hover-class="navigator-hover">连接智能锁系统</navigator>
+  <navigator url="../peripheral/idnex" open-type="redirect" hover-class="other-navigator-hover">从他人获取密钥</navigator>
+  <navigator url="/help" open-type="switchTab" hover-class="other-navigator-hover">使用帮助</navigator>
+</view>

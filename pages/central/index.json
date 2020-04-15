@@ -1,0 +1,45 @@
+{
+  "usingComponents": {},
+  "service": 
+  {
+    "UUID": "1ad1bf10-efb7-595a-8aec-f7c41c694aba",
+    "Characteristics": 
+    {
+      "Authentication":
+      {
+        "DHKey": {
+          "UUID": "1ad1bf13-efb7-595a-8aec-f7c41c694aba",
+          "Size": 32
+        },
+        "Challenge": {
+          "UUID": "1ad1bf14-efb7-595a-8aec-f7c41c694aba",
+          "Size": 32
+        },
+        "Signature": {
+          "UUID": "1ad1bf12-efb7-595a-8aec-f7c41c694aba",
+          "Size": 64
+        },
+        "Code": {
+          "UUID": "1ad1bf11-efb7-595a-8aec-f7c41c694aba",
+          "Size": 20
+        }
+      },
+      "Operation":
+      {
+        "State": {
+          "UUID": "1ad1bf15-efb7-595a-8aec-f7c41c694aba",
+          "Size": 1
+        },
+        "Type": {
+          "UUID": "1ad1bf16-efb7-595a-8aec-f7c41c694aba",
+          "Size": 1
+        },
+        "Parameter": {
+          "UUID": "1ad1bf17-efb7-595a-8aec-f7c41c694aba",
+          "Size": 248
+        }
+      }
+    }
+  }
+
+}
