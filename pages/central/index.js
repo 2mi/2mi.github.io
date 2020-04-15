@@ -1,24 +1,28 @@
 const app = getApp()
 
-function inArray(arr, key, val) {
-  for (let i = 0; i < arr.length; i++) {
-    if (arr[i][key] === val) {
-      return i;
-    }
+function XorVector(vec1, vec2) {
+  for (var i = 0; i < vec1.length ; ++i) {
+    vec1[i] ^= vec2[i];
   }
-  return -1;
 }
 
-// ArrayBuffer转16进度字符串示例
-function ab2hex(buffer) {
-  var hexArr = Array.prototype.map.call(
-    new Uint8Array(buffer),
-    function (bit) {
-      return ('00' + bit.toString(16)).slice(-2)
-    }
-  )
-  return hexArr.join('');
-}
+import Certificate from '../../utils/certificate';
+var service = require('config').service;
+var axlsign = require('../../utils/axlsign');
+var crypto = require('../../utils/Crypto').Crypto;  
+var util = crypto.util;
+require('../../utils/HMAC');
+require('../../utils/SHA1');
+var hmac = function() {
+  var IV = new Uint8Array(20);
+  function CalcHash(message, key = []){
+    key.length && IV.set(crypto.SHA1(key, {asBytes: true}));
+    IV.set(crypto.HMAC(crypto.SHA1, Array.from(IV), Array.from(IV), {asBytes: true}));
+    XorVector(IV, crypto.SHA1(message, {asBytes: true}));
+    return IV;
+  }
+  return CalcHash;
+}();
 
 Page({
   data: {
@@ -27,44 +31,8 @@ Page({
     chs: [],
   },
 
-  onLoad: function(options) {
-    /*
-    var array = new Uint8Array(32);
-    window.crypto.getRandomValues(array);   
-  
-    crypto.subtle.importKey(
-        "raw", 
-        new Uint8Array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]), 
-        { 
-          name: "HMAC",
-          hash: { name: "SHA-1" } 
-        },
-        false,
-        ["sign"]
-      ).then(function(hmacKey){
-        console.log( crypto.subtle.sign(
-            "HMAC", 
-            hmacKey,
-            new Uint8Array([172, 190, 141, 85, 37, 235, 251, 224, 156, 100, 28, 2, 173, 154, 100, 170, 173, 138, 231, 223, 226, 191, 247, 159, 112, 250, 143, 25, 162, 2, 23, 157])
-          ) );
-      });
-    */ 
-   
-    var axlsign = require('../../utils/axlsign');
-    var crypto = require('../../utils/Crypto').Crypto;  
-    require('../../utils/HMAC');
-    require('../../utils/SHA1');
-    var util = crypto.util;
-    var hmac = function(key, message) {
-      return crypto.HMAC(crypto.SHA1, message, key, {asBytes: true});
-    };
+  onLoad: function(options) {    
 
-    console.log(index.service.uuid);
-
-    //var seedArray = util.randomBytes(32);
-    //console.log( axlsign.generateKeyPair( new Uint8Array(seedArray) ));
-    //console.log( seedArray );
-    //console.log( hmac([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], seedArray) );
   },
 
   openBluetoothAdapter() {
@@ -249,3 +217,24 @@ Page({
     this._discoveryStarted = false
   },
 })
+    /*
+    var array = new Uint8Array(32);
+    window.crypto.getRandomValues(array);   
+  
+    crypto.subtle.importKey(
+        "raw", 
+        new Uint8Array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]), 
+        { 
+          name: "HMAC",
+          hash: { name: "SHA-1" } 
+        },
+        false,
+        ["sign"]
+      ).then(function(hmacKey){
+        console.log( crypto.subtle.sign(
+            "HMAC", 
+            hmacKey,
+            new Uint8Array([172, 190, 141, 85, 37, 235, 251, 224, 156, 100, 28, 2, 173, 154, 100, 170, 173, 138, 231, 223, 226, 191, 247, 159, 112, 250, 143, 25, 162, 2, 23, 157])
+          ) );
+      });
+    */ 

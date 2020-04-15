@@ -34,6 +34,7 @@ App({
     })
   },
   globalData: {
-    userInfo: null
+    title: "智能锁系统微信端"
+
   }
 })

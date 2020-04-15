@@ -12,7 +12,14 @@ Page({
    * 生命周期函数--监听页面加载
    */
   onLoad: function (options) {
-
+    var cert = new Certificate();
+    var seedArray = util.randomBytes(32);
+    var keyPair = axlsign.generateKeyPair(new Uint8Array(seedArray));
+    cert.publicKey.set(keyPair.public);
+    cert.vaildity.time = Uint32Array.of(Date.parse(new Date("2021/1/1") - Date()) / 1000);
+    cert.vaildity.count = Uint8Array.of(200); 
+    cert.signature.set(axlsign.sign(keyPair.private, cert.serialize(false)));
+    console.log(cert, axlsign.verify(cert.publicKey, cert.serialize(false), cert.signature));
   },
 
   /**
