@@ -1,6 +1,20 @@
 <!--pages/peripheral/index.wxml-->
-<view class="btn-area">
-  <navigator url="../central/index" hover-class="navigator-hover">连接智能锁系统</navigator>
-  <navigator url="../peripheral/idnex" open-type="redirect" hover-class="other-navigator-hover">从他人获取密钥</navigator>
-  <navigator url="/help" open-type="switchTab" hover-class="other-navigator-hover">使用帮助</navigator>
+<view class="container">
+  <view>
+    <text>已取得授权数: {{certs.length}}</text>
+  </view>
+
+  <navigator bindtap="bindViewTap">
+    <view class="moto-container">
+      <text class="moto">连接智能锁系统</text>
+    </view>
+  </navigator>
+  <navigator url="../peripheral/index" open-type="switchTab" hover-class="navigator-hover">
+    <view class="moto-container">
+      <text class="moto">导入或获取授权</text>
+    </view>
+  </navigator>
+  <view class="moto-container" bindtap="showCertificateInfo">
+    <text class="moto">查看授权</text>
+  </view>
 </view>

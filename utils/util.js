@@ -1,19 +1,43 @@
-const formatTime = date => {
-  const year = date.getFullYear()
-  const month = date.getMonth() + 1
-  const day = date.getDate()
-  const hour = date.getHours()
-  const minute = date.getMinutes()
-  const second = date.getSeconds()
+if (typeof _util_class == 'undefined')
+{
+  var axlsign = require('axlsign');
+  var crypto = require('Crypto').Crypto;    
+  require('SHA1');
+  require('HMAC');
 
-  return [year, month, day].map(formatNumber).join('/') + ' ' + [hour, minute, second].map(formatNumber).join(':')
-}
+  var internalHmac = function() {
+    var IV = new Uint8Array(20);
+    function CalcHash(message, key = []){
+      key.length && IV.set(crypto.SHA1(key, {asBytes: true}));
+      if(message.length){
+        IV.set(crypto.HMAC(crypto.SHA1, Array.from(IV), Array.from(IV), {asBytes: true}));
+        XorVector(IV, crypto.SHA1(message, {asBytes: true}));
+      }
+      return IV;
+    }
+    return CalcHash;
+  };
 
-const formatNumber = n => {
-  n = n.toString()
-  return n[1] ? n : '0' + n
-}
+  module.exports = {
+    XorVector:  function(vec1, vec2) {
+      for (var i = 0; i < vec1.length ; ++i) {
+        vec1[i] ^= vec2[i];
+      }
+      return vec1
+    },
+    generateKeyPair: axlsign.generateKeyPair,
+    sign: axlsign.sign,
+    sharedKey: axlsign.sharedKey,
+    randomBytes: crypto.util.randomBytes,
+    hmac: internalHmac()
+  };
 
-module.exports = {
-  formatTime: formatTime
+  String.prototype.format = function () {
+    const e = arguments;
+    return !!this && this.replace(/\{(\d+)\}/g, function (t, r) {
+      return e[r] ? e[r] : t;
+    });
+  };
 }
+var _util_class = true;
+

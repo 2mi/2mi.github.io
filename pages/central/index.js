@@ -1,69 +1,50 @@
 const app = getApp()
 
-function XorVector(vec1, vec2) {
-  for (var i = 0; i < vec1.length ; ++i) {
-    vec1[i] ^= vec2[i];
-  }
-}
-
-import Certificate from '../../utils/certificate';
-var service = require('config').service;
-var axlsign = require('../../utils/axlsign');
-var crypto = require('../../utils/Crypto').Crypto;  
-var util = crypto.util;
-require('../../utils/HMAC');
-require('../../utils/SHA1');
-var hmac = function() {
-  var IV = new Uint8Array(20);
-  function CalcHash(message, key = []){
-    key.length && IV.set(crypto.SHA1(key, {asBytes: true}));
-    IV.set(crypto.HMAC(crypto.SHA1, Array.from(IV), Array.from(IV), {asBytes: true}));
-    XorVector(IV, crypto.SHA1(message, {asBytes: true}));
-    return IV;
-  }
-  return CalcHash;
-}();
+var config = require('config')
+var service = require('service')
 
 Page({
   data: {
     devices: [],
-    connected: false,
-    chs: [],
+    connected: false
   },
-
-  onLoad: function(options) {    
-
-  },
-
-  openBluetoothAdapter() {
+  onLoad: function(options) {
+    wx.showLoading({
+      title: '等待适配器...',
+    })
+    let notifyOnSuccess = () => {
+      wx.hideLoading()
+      this.startBluetoothDevicesDiscovery()
+    }
     wx.openBluetoothAdapter({
-      success: (res) => {
-        console.log('openBluetoothAdapter success', res)
-        this.startBluetoothDevicesDiscovery()
-      },
+      success: (res) => notifyOnSuccess(),
       fail: (res) => {
-        if (res.errCode === 10001) {
-          wx.onBluetoothAdapterStateChange(function (res) {
-            console.log('onBluetoothAdapterStateChange', res)
-            if (res.available) {
-              this.startBluetoothDevicesDiscovery()
-            }
+        res.errCode === 10001 ? wx.onBluetoothAdapterStateChange(function (state) {
+          state.available && notifyOnSuccess()
+        }) : (
+          wx.hideLoading(),
+          wx.showToast({
+            title: '[!] 蓝牙无法使用',
+            icon: 'none'
           })
-        }
+        )
       }
     })
   },
-  getBluetoothAdapterState() {
+  onShow: function() {    
     wx.getBluetoothAdapterState({
       success: (res) => {
-        console.log('getBluetoothAdapterState', res)
-        if (res.discovering) {
-          this.onBluetoothDeviceFound()
-        } else if (res.available) {
-          this.startBluetoothDevicesDiscovery()
-        }
+        res.available && !res.discovering && this.startBluetoothDevicesDiscovery()
       }
     })
+  },
+  onHide: function() {
+    this.stopBluetoothDevicesDiscovery()
+  },
+  onUnload: function() {
+    this.stopBluetoothDevicesDiscovery()
+    wx.offBluetoothAdapterStateChange()
+    wx.closeBluetoothAdapter()
   },
   startBluetoothDevicesDiscovery() {
     if (this._discoveryStarted) {
@@ -71,170 +52,109 @@ Page({
     }
     this._discoveryStarted = true
     wx.startBluetoothDevicesDiscovery({
-      services: [service.uuid],
+      services: [config.service.uuid],
       allowDuplicatesKey: true,
       success: (res) => {
-        console.log('startBluetoothDevicesDiscovery success', res)
-        this.onBluetoothDeviceFound()
+        this.onBluetoothDeviceFound() 
+        //this.updateBluetoothDevice()
       },
     })
   },
   stopBluetoothDevicesDiscovery() {
-    wx.stopBluetoothDevicesDiscovery()
+    if (this._discoveryStarted) {
+      this._discoveryStarted = false
+      wx.offBluetoothDeviceFound()
+      wx.stopBluetoothDevicesDiscovery()
+    }
   },
   onBluetoothDeviceFound() {
     wx.onBluetoothDeviceFound((res) => {
-      res.devices.forEach(device => {
-        if (!device.name && !device.localName) {
-          return
-        }
-        const foundDevices = this.data.devices
-        const idx = inArray(foundDevices, 'deviceId', device.deviceId)
-        const data = {}
-        if (idx === -1) {
-          data[`devices[${foundDevices.length}]`] = device
-        } else {
-          data[`devices[${idx}]`] = device
-        }
-        this.setData(data)
+      res.devices.forEach(dev => {   
+        var device = this.data.devices.find(d => (d.deviceId == dev.deviceId))
+        device ? (device.RSSI = dev.RSSI) : this.data.devices.push(dev)
+        this.setData(this.data)
       })
     })
   },
   createBLEConnection(e) {
     const ds = e.currentTarget.dataset
-    const deviceId = ds.deviceId
-    const name = ds.name
-    wx.createBLEConnection({
-      deviceId,
-      success: (res) => {
-        this.setData({
-          connected: true,
-          name,
-          deviceId,
-        })
-        this.getBLEDeviceServices(deviceId)
-      }
+    const dev = this.data.devices[ds.index]
+    wx.showLoading({
+      title: '等待连接...',
+      mask: true
     })
-    this.stopBluetoothDevicesDiscovery()
+    wx.createBLEConnection({
+      deviceId: dev.deviceId,
+      success: (res) => {
+        this.stopBluetoothDevicesDiscovery()
+        wx.getBLEDeviceCharacteristics({
+          deviceId: dev.deviceId,
+          serviceId: dev.advertisServiceUUIDs[0],
+          success: (res) => {    
+            dev.primaryService = {
+              characteristics: res.characteristics
+            }
+            this.data.devices = [dev]
+            this.setData(this.data)
+          },
+          complete: (res) => {
+            wx.hideLoading()
+          }
+        })
+      },
+      fail: (res) => {
+        wx.showToast({
+          title: '[!] 连接不成功',
+          icon: 'none'
+        })
+      }
+    })    
+    wx.onBLEConnectionStateChange((res) => {
+      (this.data.connected = res.connected) ? service.connect(res.deviceId) : service.disconnect(res.deviceId)
+      this.setData(this.data)
+    })
   },
   closeBLEConnection() {
     wx.closeBLEConnection({
-      deviceId: this.data.deviceId
-    })
-    this.setData({
-      connected: false,
-      chs: [],
-      canWrite: false,
-    })
-  },
-  getBLEDeviceServices(deviceId) {
-    wx.getBLEDeviceServices({
-      deviceId,
-      success: (res) => {
-        for (let i = 0; i < res.services.length; i++) {
-          if (res.services[i].isPrimary) {
-            this.getBLEDeviceCharacteristics(deviceId, res.services[i].uuid)
-            return
-          }
-        }
+      deviceId: this.data.devices[0].deviceId,
+      complete: (res) => {
+        wx.offBLEConnectionStateChange()        
+        this.startBluetoothDevicesDiscovery()
       }
     })
-  },
-  getBLEDeviceCharacteristics(deviceId, serviceId) {
-    wx.getBLEDeviceCharacteristics({
-      deviceId,
-      serviceId,
-      success: (res) => {
-        console.log('getBLEDeviceCharacteristics success', res.characteristics)
-        for (let i = 0; i < res.characteristics.length; i++) {
-          let item = res.characteristics[i]
-          if (item.properties.read) {
-            wx.readBLECharacteristicValue({
-              deviceId,
-              serviceId,
-              characteristicId: item.uuid,
-            })
-          }
-          if (item.properties.write) {
-            this.setData({
-              canWrite: true
-            })
-            this._deviceId = deviceId
-            this._serviceId = serviceId
-            this._characteristicId = item.uuid
-            this.writeBLECharacteristicValue()
-          }
-          if (item.properties.notify || item.properties.indicate) {
-            wx.notifyBLECharacteristicValueChange({
-              deviceId,
-              serviceId,
-              characteristicId: item.uuid,
-              state: true,
-            })
-          }
-        }
-      },
-      fail(res) {
-        console.error('getBLEDeviceCharacteristics', res)
-      }
-    })
-    // 操作之前先监听，保证第一时间获取数据
-    wx.onBLECharacteristicValueChange((characteristic) => {
-      const idx = inArray(this.data.chs, 'uuid', characteristic.characteristicId)
-      const data = {}
-      if (idx === -1) {
-        data[`chs[${this.data.chs.length}]`] = {
-          uuid: characteristic.characteristicId,
-          value: ab2hex(characteristic.value)
-        }
-      } else {
-        data[`chs[${idx}]`] = {
-          uuid: characteristic.characteristicId,
-          value: ab2hex(characteristic.value)
-        }
-      }
-      // data[`chs[${this.data.chs.length}]`] = {
-      //   uuid: characteristic.characteristicId,
-      //   value: ab2hex(characteristic.value)
-      // }
-      this.setData(data)
+  },  
+  readBLECharacteristicValue(character){
+    wx.readBLECharacteristicValue({
+      characteristicId: character.uuid,
+      deviceId: this.data.devices[0].deviceId,
+      serviceId: config.service.uuid
     })
   },
-  writeBLECharacteristicValue() {
-    // 向蓝牙设备发送一个0x00的16进制数据
-    let buffer = new ArrayBuffer(1)
-    let dataView = new DataView(buffer)
-    dataView.setUint8(0, Math.random() * 255 | 0)
+  writeBLECharacteristicValue(character, binary){
     wx.writeBLECharacteristicValue({
-      deviceId: this._deviceId,
-      serviceId: this._deviceId,
-      characteristicId: this._characteristicId,
-      value: buffer,
+      characteristicId: character.uuid,
+      deviceId: this.data.devices[0].deviceId,
+      serviceId: config.service.uuid,
+      value: binary
     })
   },
-  closeBluetoothAdapter() {
-    wx.closeBluetoothAdapter()
-    this._discoveryStarted = false
-  },
+  updateBluetoothDevice() {        
+    if (!this._discoveryStarted){
+      return
+    }
+    var isUpdated = false
+    this.data.devices.forEach((dev, index) => {
+      wx.getBLEDeviceRSSI({
+        deviceId: dev.deviceId,
+        success: (rssi) => {
+          rssi == -90 && (isUpdated = true) && this.devices.splice(index, 1)
+        }
+      })
+    })
+    if(isUpdated){
+      this.setData(this.data)
+    }
+    setTimeout(this.updateBluetoothDevice, 10000)
+  }
 })
-    /*
-    var array = new Uint8Array(32);
-    window.crypto.getRandomValues(array);   
-  
-    crypto.subtle.importKey(
-        "raw", 
-        new Uint8Array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]), 
-        { 
-          name: "HMAC",
-          hash: { name: "SHA-1" } 
-        },
-        false,
-        ["sign"]
-      ).then(function(hmacKey){
-        console.log( crypto.subtle.sign(
-            "HMAC", 
-            hmacKey,
-            new Uint8Array([172, 190, 141, 85, 37, 235, 251, 224, 156, 100, 28, 2, 173, 154, 100, 170, 173, 138, 231, 223, 226, 191, 247, 159, 112, 250, 143, 25, 162, 2, 23, 157])
-          ) );
-      });
-    */ 
+

@@ -1,7 +1,44 @@
-/* pages/peripheral/index.wxss */
-.navigator-hover {
-  color:blue;
+/* pages/welcome/index.wxss */
+
+.userinfo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
-.other-navigator-hover {
-  color:red;
+
+.userinfo-avatar {
+  width: 150rpx;
+  height: 150rpx;
+  margin: 20rpx;
+  border-radius: 50%;  
+  margin-top:100rpx;
+}
+
+.usermotto {
+  margin-top: 150rpx;
+  color: rgb(94, 83, 83);  
+  font-size:36rpx;
+}
+
+.moto-container {
+  margin-top:0px;
+  border:2px solid #405f80;
+  background-color: rgba(250, 246, 234, 0.9);
+  width:150px;
+  height:30px;
+  border-radius:5px;
+  text-align:center;
+}
+
+.moto {
+  font-size:24rpx;
+  line-height:40rpx;
+  color:#405f80;
+}
+
+page {
+  height:100%;
+  background-color:rgb(38, 196, 188);  
+  font-family:MicroSoft Yahei;
+  font-weight:bolder;
 }

@@ -1,4 +1,8 @@
 // pages/central/index.js
+
+import Certificate, { cert_flags } from '../../utils/certificate';
+var util = require('../../utils/util');
+
 Page({
 
   /**
@@ -12,14 +16,33 @@ Page({
    * 生命周期函数--监听页面加载
    */
   onLoad: function (options) {
+    var issueCert = new Certificate();
     var cert = new Certificate();
-    var seedArray = util.randomBytes(32);
-    var keyPair = axlsign.generateKeyPair(new Uint8Array(seedArray));
+    var keyPair = util.generateKeyPair( Uint8Array.from(util.randomBytes(32)) );
+    issueCert.publicKey.set(keyPair.public);
+    issueCert.privateKey.set(keyPair.private);
+    issueCert.authorize(issueCert);
+    var keyPair = util.generateKeyPair( Uint8Array.from(util.randomBytes(32)) );
     cert.publicKey.set(keyPair.public);
-    cert.vaildity.time = Uint32Array.of(Date.parse(new Date("2021/1/1") - Date()) / 1000);
-    cert.vaildity.count = Uint8Array.of(200); 
-    cert.signature.set(axlsign.sign(keyPair.private, cert.serialize(false)));
-    console.log(cert, axlsign.verify(cert.publicKey, cert.serialize(false), cert.signature));
+    cert.privateKey.set(keyPair.private);    
+    cert.setDate(new Date('2021/1/1'));
+    cert.vaildity.count.set(Uint8Array.of(3));
+    cert.constrain.set(Uint8Array.of(0));
+    cert.authorize(issueCert);
+    try {
+      wx.clearStorageSync();
+      wx.setStorageSync('RootCertificate', Array.from(issueCert.serialize()));
+      wx.setStorageSync('MyCertificate', Array.from(cert.serialize()));
+      console.log(Certificate.length);
+      for (let name of wx.getStorageInfoSync().keys) {
+        if ( name.indexOf("Certificate") != -1 ) {
+          var crt = Certificate.unserialize(Uint8Array.from(wx.getStorageSync(name)));
+          console.log( name, crt );
+        }
+      }
+    } catch (e) {
+      console.log(e);
+    }     
   },
 
   /**
@@ -71,3 +94,25 @@ Page({
 
   }
 })
+
+    /*
+    var array = new Uint8Array(32);
+    window.crypto.getRandomValues(array);   
+  
+    crypto.subtle.importKey(
+        "raw", 
+        new Uint8Array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]), 
+        { 
+          name: "HMAC",
+          hash: { name: "SHA-1" } 
+        },
+        false,
+        ["sign"]
+      ).then(function(hmacKey){
+        console.log( crypto.subtle.sign(
+            "HMAC", 
+            hmacKey,
+            new Uint8Array([172, 190, 141, 85, 37, 235, 251, 224, 156, 100, 28, 2, 173, 154, 100, 170, 173, 138, 231, 223, 226, 191, 247, 159, 112, 250, 143, 25, 162, 2, 23, 157])
+          ) );
+      });
+    */ 

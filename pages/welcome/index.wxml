@@ -3,15 +3,15 @@
   <view class="userinfo">
     <button wx:if="{{!hasUserInfo && canIUse}}" open-type="getUserInfo" bindgetuserinfo="getUserInfo"> 获取头像 </button>
     <block wx:else>
-      <image bindtap="bindViewTap" class="userinfo-avatar" src="{{userInfo.avatarUrl}}" mode="cover"></image>
+      <image class="userinfo-avatar" src="{{userInfo.avatarUrl}}" mode="cover"></image>
     </block>
   </view>
   <view class="usermotto">
     <text class="user-motto">{{motto}}, {{userInfo.nickName}}</text>
   </view>
-  <navigator url="../navigation/index" hover-class="navigator-hover">
+  <navigator url="../navigation/index" open-type="switchTab" hover-class="navigator-hover">
     <view class="moto-container">
-      <text class="moto">开启自行车之旅</text>
+      <text class="moto">开启自行车使用</text>
     </view>
   </navigator>
 </view>
