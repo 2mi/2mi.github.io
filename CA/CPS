@@ -1,0 +1,57 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8" />
+<title>ifaner.net & agent CA - Policy Statement</title>
+<style>
+	table {
+		text-align: left;
+		font-size: 20px;
+		}
+	thead {
+		margin-bottom: 3em;
+		}
+</style>
+</head>
+<body>
+	<table>
+		<thead>
+			<tr>
+				<th>ifaner.net</th>
+				</tr>
+			<tr>
+				<th>Certificates Policies Statement</th>
+				<tr />
+			<tr>
+				<th colspan="3">
+					<hr />
+					</th>
+				</tr>
+		</thead>
+		<tbody>
+			<tr>
+				<td>
+					Organization Validation
+					</td>
+					<td>
+						企业认证
+						</td>
+						<td>
+							2.23.140.1.2.2
+							</td>
+				</tr>
+			<tr>
+				<td>
+					Non-Extended Validation Code Signing
+					</td>
+					<td>
+						个人代码签名
+						</td>
+						<td>
+							2.23.140.1.4
+							</td>
+				</tr>
+		</tbody>
+	</table>
+</body>
+</html>
